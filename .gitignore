@@ -1,0 +1,6 @@
+.DS_Store
+*.dSYM/
+*.out
+*.vcd
+lab1/testC
+*.tar
