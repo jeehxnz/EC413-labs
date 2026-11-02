@@ -26,6 +26,8 @@ module ALU_control(
 		func = 3'd1;
 	end else if (ALUOp == 2'b10) begin
 		func = 3'd0;
+	end else if (ALUOp == 2'b11) begin   // lui: shift immediate left 16
+		func = 3'd6;
 	end else begin
 		func = 3'd7;
 	end

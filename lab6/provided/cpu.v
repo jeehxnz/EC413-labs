@@ -57,7 +57,7 @@ module cpu(
 	 wire Jump;
 	 wire BranchNE;
 	 wire LUI;
-    control Control(instruction [31:26], ALUOp, MemRead, MemtoReg, RegDst, Branch, ALUSrc, MemWrite, RegWrite, Jump, BranchNE, LUI); 
+    control Control(instruction [31:26], ALUOp, MemRead, MemtoReg, RegDst, Branch, ALUSrc, MemWrite, RegWrite, Jump, BranchNE); 
 	 
 	 
 	 
@@ -85,16 +85,8 @@ module cpu(
 	 
 	 Memory Data_Memory(ALUOut, read_data_2, MemOut, MemRead, MemWrite, clk);
 
-
-    // Step 1 (original mux): MemtoReg=0 picks the ALU result, MemtoReg=1 picks memory data (lw).
-    wire [31:0] alu_or_mem_data;
-    mux #(32) ALU_Mem_Select_MUX (MemtoReg, ALUOut, MemOut, alu_or_mem_data);
-
-    // Step 2 (new LUI MUX): the 16-bit immediate goes in the upper half, zeros fill the lower half.
-    wire [31:0] lui_value;
-    assign lui_value = {instruction[15:0], 16'b0};
-    // LUI=1 overrides step 1 and writes lui_value; LUI=0 passes alu_or_mem_data through unchanged.
-    mux #(32) LUI_MUX (LUI, alu_or_mem_data, lui_value, write_data);	 
+	// LUI
+	mux #(32) ALU_Mem_Select_MUX (MemtoReg, ALUOut, MemOut, write_data);
 	 
 	 wire [31:0] PC_in;
 	 PC Program_Counter(PC_out, PC_in, clk, rst);
