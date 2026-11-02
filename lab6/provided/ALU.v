@@ -37,6 +37,8 @@ module ALU(
 		out = a|b;
 		else if (func == 3'd4)
 		out = ~(a|b);
+		else if (func == 3'd5)
+		out = ($signed(a) < $signed(b)) ? 32'd1 : 32'd0;
 		else
 		out = 0;
    end

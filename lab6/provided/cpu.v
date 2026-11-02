@@ -54,7 +54,10 @@ module cpu(
 	 wire ALUSrc;
 	 wire MemWrite;
 	 wire RegWrite;
-    control Control(instruction [31:26], ALUOp, MemRead, MemtoReg, RegDst, Branch, ALUSrc, MemWrite, RegWrite); 
+	 wire Jump;
+	 wire BranchNE;
+	 wire LUI;
+    control Control(instruction [31:26], ALUOp, MemRead, MemtoReg, RegDst, Branch, ALUSrc, MemWrite, RegWrite, Jump, BranchNE, LUI); 
 	 
 	 
 	 
@@ -83,7 +86,12 @@ module cpu(
 	 Memory Data_Memory(ALUOut, read_data_2, MemOut, MemRead, MemWrite, clk);
 
 
-    mux #(32) ALU_Mem_Select_MUX (MemtoReg, ALUOut, MemOut, write_data);	 
+    wire [31:0] alu_or_mem_data;
+    mux #(32) ALU_Mem_Select_MUX (MemtoReg, ALUOut, MemOut, alu_or_mem_data);
+
+    wire [31:0] lui_value;
+    assign lui_value = {instruction[15:0], 16'b0};
+    mux #(32) LUI_MUX (LUI, alu_or_mem_data, lui_value, write_data);	 
 	 
 	 
 	 wire [31:0] PC_in;
@@ -100,8 +108,13 @@ module cpu(
 	 
 	 
 	 wire PCSrc;
-	 and Branch_And (PCSrc, Branch, zero_flag);
-	 mux #(32) PC_Input_MUX (PCSrc, PC_plus_4, Branch_target_address, PC_in);
+	 assign PCSrc = (Branch & zero_flag) | (BranchNE & ~zero_flag);
+	 wire [31:0] PC_next_seq_or_branch;
+	 mux #(32) PC_Input_MUX (PCSrc, PC_plus_4, Branch_target_address, PC_next_seq_or_branch);
+
+	 wire [31:0] Jump_address;
+	 assign Jump_address = {PC_plus_4[31:28], instruction[25:0], 2'b00};
+	 mux #(32) Jump_MUX (Jump, PC_next_seq_or_branch, Jump_address, PC_in);
 	 
 	 
 	 							 
