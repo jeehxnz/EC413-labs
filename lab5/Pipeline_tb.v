@@ -17,6 +17,14 @@ Pipeline uut (.InstrIn(InstrIn), .Reset(Reset), .Clk(Clk),
 initial Clk = 0;
 always #5 Clk = ~Clk;
 
+// Register file contents as plain wires
+wire [31:0] R1 = uut.RegFile.w_reg_to_outmux[1];
+wire [31:0] R2 = uut.RegFile.w_reg_to_outmux[2];
+wire [31:0] R3 = uut.RegFile.w_reg_to_outmux[3];
+wire [31:0] R4 = uut.RegFile.w_reg_to_outmux[4];
+wire [31:0] R5 = uut.RegFile.w_reg_to_outmux[5];
+wire [31:0] R6 = uut.RegFile.w_reg_to_outmux[6];
+
 reg [31:0] model [0:31];     // expected register file contents
 reg [31:0] corner [0:5];     // register values holding the corner operands
 reg [4:0]  corner_reg [0:5]; // which register holds each corner value
