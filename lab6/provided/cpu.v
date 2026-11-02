@@ -54,7 +54,10 @@ module cpu(
 	 wire ALUSrc;
 	 wire MemWrite;
 	 wire RegWrite;
-    control Control(instruction [31:26], ALUOp, MemRead, MemtoReg, RegDst, Branch, ALUSrc, MemWrite, RegWrite); 
+	 wire Jump;
+	 wire BranchNE;
+	 wire LUI;
+    control Control(instruction [31:26], ALUOp, MemRead, MemtoReg, RegDst, Branch, ALUSrc, MemWrite, RegWrite, Jump, BranchNE); 
 	 
 	 
 	 
@@ -82,9 +85,8 @@ module cpu(
 	 
 	 Memory Data_Memory(ALUOut, read_data_2, MemOut, MemRead, MemWrite, clk);
 
-
-    mux #(32) ALU_Mem_Select_MUX (MemtoReg, ALUOut, MemOut, write_data);	 
-	 
+	// LUI
+	mux #(32) ALU_Mem_Select_MUX (MemtoReg, ALUOut, MemOut, write_data);
 	 
 	 wire [31:0] PC_in;
 	 PC Program_Counter(PC_out, PC_in, clk, rst);
@@ -99,10 +101,20 @@ module cpu(
 	 Adder #(32) Branch_Target_Adder (PC_plus_4, immediate_x_4, Branch_target_address);
 	 
 	 
+	 // beq : Branch=1,   taken when zero_flag=1 (registers equal)
+	 // bne : BranchNE=1, taken when zero_flag=0 (registers differ)
+	 // Both use ALUOp=01 (subtract) so zero_flag means "equal".
+	 // Branch and BranchNE are never both 1.
 	 wire PCSrc;
-	 and Branch_And (PCSrc, Branch, zero_flag);
-	 mux #(32) PC_Input_MUX (PCSrc, PC_plus_4, Branch_target_address, PC_in);
-	 
+	 assign PCSrc = (Branch & zero_flag) | (BranchNE & ~zero_flag);
+	 wire [31:0] PC_next_seq_or_branch;
+	 mux #(32) PC_Input_MUX (PCSrc, PC_plus_4, Branch_target_address, PC_next_seq_or_branch);
+
+	 // Jump address = top 4 bits of PC+4, then the 26-bit target field, then 00.
+	 wire [31:0] Jump_address;
+	 assign Jump_address = {PC_plus_4[31:28], instruction[25:0], 2'b00};
+	 // Jump=1 overrides the branch/sequential choice. The output is the PC's next value.
+	 mux #(32) Jump_MUX (Jump, PC_next_seq_or_branch, Jump_address, PC_in);	 
 	 
 	 							 
 endmodule
